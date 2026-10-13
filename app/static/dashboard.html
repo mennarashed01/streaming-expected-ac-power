@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>TAYF · PV Expected Power Monitor</title>
+<style>
+:root{color-scheme:light;--bg:#f4f7fb;--card:#fff;--ink:#101828;--muted:#667085;--line:#e4eaf2;--accent:#2563eb;--accent-soft:rgba(37,99,235,.11);--sun:#d97706;--sun-soft:rgba(217,119,6,.12);--hot:#ea580c;--cool:#0891b2;--ok:#15803d;--warn:#a16207;--bad:#b42318;--shadow:0 8px 30px rgba(16,24,40,.045)}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#080d17;--card:#111827;--ink:#edf2fa;--muted:#9aa8bc;--line:#253247;--accent:#70a5ff;--accent-soft:rgba(112,165,255,.14);--sun:#fbbf24;--sun-soft:rgba(251,191,36,.13);--hot:#fb923c;--cool:#22d3ee;--ok:#4ade80;--warn:#fbbf24;--bad:#fb7185;--shadow:0 8px 30px rgba(0,0,0,.14)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#080d17;--card:#111827;--ink:#edf2fa;--muted:#9aa8bc;--line:#253247;--accent:#70a5ff;--accent-soft:rgba(112,165,255,.14);--sun:#fbbf24;--sun-soft:rgba(251,191,36,.13);--hot:#fb923c;--cool:#22d3ee;--ok:#4ade80;--warn:#fbbf24;--bad:#fb7185;--shadow:0 8px 30px rgba(0,0,0,.14)}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;transition:background .2s,color .2s}
+.wrap{max-width:1400px;margin:auto;padding:24px 22px 40px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px;margin-bottom:20px}
+.brand{display:flex;gap:13px;align-items:center}.logo{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,var(--accent),#06b6d4);color:white;font-size:23px;font-weight:900;box-shadow:0 8px 20px var(--accent-soft)}
+h1{font-size:clamp(20px,2.3vw,28px);letter-spacing:-.045em;margin:0;font-weight:800}.sub{color:var(--muted);font-size:12px;margin-top:4px}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.pill{display:inline-flex;align-items:center;gap:8px;padding:8px 11px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:12px;font-weight:650;box-shadow:var(--shadow)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}.pill[data-s="live"] .dot{background:var(--ok);animation:pulse 1.6s infinite}.pill[data-s="wait"] .dot{background:var(--warn)}.pill[data-s="stale"] .dot,.pill[data-s="down"] .dot{background:var(--bad)}.pill[data-s="paused"] .dot{background:var(--muted)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(74,222,128,.5)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+button,select,input{font:inherit}button{font-size:12px;font-weight:700;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 13px;cursor:pointer;box-shadow:var(--shadow);transition:border-color .15s,transform .15s}button:hover{border-color:var(--accent);transform:translateY(-1px)}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.banner{display:none;margin-bottom:14px;padding:12px 15px;border-radius:12px;font-weight:600;background:rgba(180,35,24,.1);color:var(--bad);border:1px solid var(--bad)}.banner.show{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow);min-width:0}.card h2{font-size:11px;margin:0 0 12px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.09em}
+.capacity-panel{margin-bottom:14px;position:relative;overflow:hidden}.capacity-panel:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(var(--accent),var(--cool))}
+.capacity-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px}.capacity-heading h2{margin:0 0 4px}.capacity-heading .sub{margin:0}
+.capacity-badge{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid var(--accent);border-radius:999px;color:var(--accent);background:var(--accent-soft);font-size:10px;font-weight:800;letter-spacing:.09em}.capacity-badge:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.capacity-controls{display:grid;grid-template-columns:minmax(150px,1fr) minmax(190px,.8fr) auto;align-items:end;gap:13px}.capacity-field{display:flex;flex-direction:column;gap:8px;min-width:0}.capacity-field>span{font-size:12px;font-weight:750;color:var(--muted)}
+.capacity-field input,.capacity-field select{width:100%;min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font-size:15px;font-weight:700;outline:none}.capacity-field input:focus,.capacity-field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.reset-capacity{min-height:46px;white-space:nowrap;padding:10px 15px;border-color:var(--accent);color:var(--accent)}.capacity-note{margin-top:12px;color:var(--muted);font-size:12px}.capacity-note.error{color:var(--bad)}
+.top{display:grid;grid-template-columns:minmax(260px,.85fr) 2fr;gap:14px;margin-bottom:14px}.hero{display:flex;flex-direction:column;align-items:center;text-align:center;justify-content:center;min-height:300px;background:radial-gradient(ellipse at 50% 0%,var(--accent-soft),transparent 65%),var(--card)}
+.gauge{width:100%;max-width:300px}.gtrack{stroke:var(--line)}.gfill{stroke:var(--accent);transition:stroke-dasharray .45s ease}.gval{font-size:29px;font-weight:800;fill:var(--ink);font-variant-numeric:tabular-nums}.gunit{font-size:10px;fill:var(--muted)}
+.watts{font-size:clamp(25px,3vw,34px);font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums}.watts small{font-size:13px;color:var(--muted);font-weight:650;letter-spacing:0}.capacity-summary{font-size:11px;color:var(--muted);margin-top:2px}
+.tag{display:inline-block;font-size:11px;padding:4px 10px;border-radius:999px;background:var(--sun-soft);color:var(--sun);font-weight:750;margin-top:9px}.tag.night{background:var(--accent-soft);color:var(--accent)}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.kpi{padding:16px}.kpi .v{font-size:clamp(21px,2vw,28px);font-weight:800;letter-spacing:-.035em;font-variant-numeric:tabular-nums}.kpi .u{font-size:11px;color:var(--muted);font-weight:600;margin-left:4px}.kpi .d{font-size:11px;color:var(--muted);margin-top:4px;font-variant-numeric:tabular-nums}.d.up{color:var(--ok)}.d.dn{color:var(--bad)}.spark{width:100%;height:28px;margin-top:8px;display:block}
+.charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:14px}.charts .wide{grid-column:1/-1}.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-bottom:8px}.legend i{display:inline-block;width:15px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}.cwrap{position:relative}svg.ch{width:100%;height:auto;display:block;touch-action:pan-y}.grid{stroke:var(--line);stroke-width:1}.axis{fill:var(--muted);font-size:12px;font-family:inherit}.tip{position:absolute;pointer-events:none;display:none;z-index:2;min-width:145px;padding:9px 11px;border-radius:10px;background:var(--card);border:1px solid var(--line);box-shadow:0 6px 24px rgba(0,0,0,.15);font-size:12px;font-variant-numeric:tabular-nums}.tip b{display:block;margin-bottom:3px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:12px}th,td{padding:10px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--muted);font-weight:800;font-size:10px;text-transform:uppercase;letter-spacing:.06em}tbody tr:hover{background:var(--accent-soft)}tbody tr:last-child td{border-bottom:0}.tw{overflow-x:auto}.empty{color:var(--muted);text-align:center;padding:28px 8px}
+footer{color:var(--muted);font-size:11px;margin-top:16px;line-height:1.8}code{background:var(--accent-soft);padding:2px 5px;border-radius:5px}
+@media(max-width:900px){.top{grid-template-columns:1fr}.hero{min-height:280px}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:650px){.wrap{padding:16px 12px 28px}.charts{grid-template-columns:1fr}.charts .wide{grid-column:auto}.capacity-controls{grid-template-columns:1fr 1fr}.reset-capacity{grid-column:1/-1}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.tools{width:100%}.brand{align-items:flex-start}.logo{width:42px;height:42px;flex-shrink:0}}
+@media(max-width:380px){.capacity-controls{grid-template-columns:1fr}.reset-capacity{grid-column:auto}.kpis{grid-template-columns:1fr 1fr}.pill{font-size:11px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand">
+    <div class="logo" aria-hidden="true">☀</div>
+    <div>
+      <h1>PV Expected Power <span style="color:var(--accent)">·</span> Live Monitor</h1>
+      <div class="sub">TAYF Intelligence · PVDAQ System 10 · NREL CIS-1, Golden, Colorado</div>
+    </div>
+  </div>
+  <div class="tools">
+    <span class="pill" id="src" title="Where readings come from">Source: –</span>
+    <span class="pill" id="status" data-s="wait"><span class="dot"></span><span id="statusText">Connecting…</span></span>
+    <button id="bPause" type="button">Pause</button>
+    <button id="bCsv" type="button">Export CSV</button>
+    <button id="bTheme" type="button" aria-label="Toggle color theme">☾ Dark mode</button>
+  </div>
+</header>
+
+<div class="banner" id="banner" role="alert"></div>
+
+<section class="card capacity-panel">
+  <div class="capacity-heading">
+    <div>
+      <h2>Plant configuration</h2>
+      <div class="sub">Scale normalized model output to your target plant capacity.</div>
+    </div>
+    <span class="capacity-badge">LIVE SCALING</span>
+  </div>
+  <div class="capacity-controls">
+    <label class="capacity-field"><span>Installed capacity</span>
+      <input id="capacityInput" type="number" min="0.000001" step="any" value="1" inputmode="decimal" aria-label="Installed plant capacity">
+    </label>
+    <label class="capacity-field"><span>Capacity unit</span>
+      <select id="capacityUnit" aria-label="Capacity unit">
+        <option value="W">W · Watt</option><option value="kW">kW · Kilowatt</option><option value="MW" selected>MW · Megawatt</option>
+      </select>
+    </label>
+    <button id="bResetCapacity" type="button" class="reset-capacity">Reset to 1 MW</button>
+  </div>
+  <div class="capacity-note" id="capacityNote">1 MW = 1,000 kW = 1,000,000 W</div>
+</section>
+
+<section class="top">
+  <div class="card hero" aria-live="polite">
+    <h2>Expected power ratio</h2>
+    <svg class="gauge" viewBox="0 0 200 125" role="img" aria-label="Expected power ratio gauge">
+      <path class="gtrack" d="M20 105 A80 80 0 0 1 180 105" fill="none" stroke-width="14" stroke-linecap="round"/>
+      <path id="gFill" class="gfill" d="M20 105 A80 80 0 0 1 180 105" fill="none" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 252"/>
+      <text id="gVal" class="gval" x="100" y="92" text-anchor="middle">–</text>
+      <text class="gunit" x="100" y="110" text-anchor="middle">% of rated</text>
+      <text class="gunit" x="20" y="122" text-anchor="middle">0</text><text class="gunit" x="180" y="122" text-anchor="middle">100</text>
+    </svg>
+    <div class="watts"><span id="kW">–</span> <small id="powerUnit">MW</small></div>
+    <div class="capacity-summary" id="capacitySummary">Based on 1 MW installed capacity</div>
+    <span class="tag night" id="kDay">Waiting for data</span>
+    <div class="sub" style="margin-top:8px">Reading time (site): <b id="kTime">–</b></div>
+  </div>
+
+  <div class="kpis">
+    <div class="card kpi"><h2>POA irradiance</h2><div><span class="v" id="kPoa">–</span><span class="u">W/m²</span></div><div class="d" id="dPoa">&nbsp;</div><svg class="spark" id="sPoa" viewBox="0 0 120 30" preserveAspectRatio="none"></svg></div>
+    <div class="card kpi"><h2>Module temp</h2><div><span class="v" id="kMod">–</span><span class="u">°C</span></div><div class="d" id="dMod">&nbsp;</div><svg class="spark" id="sMod" viewBox="0 0 120 30" preserveAspectRatio="none"></svg></div>
+    <div class="card kpi"><h2>Ambient temp</h2><div><span class="v" id="kAmb">–</span><span class="u">°C</span></div><div class="d" id="dAmb">&nbsp;</div><svg class="spark" id="sAmb" viewBox="0 0 120 30" preserveAspectRatio="none"></svg></div>
+    <div class="card kpi"><h2>Module − ambient</h2><div><span class="v" id="kDt">–</span><span class="u">°C</span></div><div class="d">Thermal rise</div></div>
+    <div class="card kpi"><h2>Session average ratio</h2><div><span class="v" id="kAvg">–</span><span class="u">%</span></div><div class="d" id="dPeak">Peak –</div></div>
+    <div class="card kpi"><h2>Readings received</h2><div><span class="v" id="kCnt">0</span></div><div class="d" id="dRate">– / min</div></div>
+  </div>
+</section>
+
+<section class="charts">
+  <div class="card wide"><h2>Expected power ratio vs irradiance</h2>
+    <div class="legend"><span><i style="background:var(--accent)"></i>Expected ratio (% of rated, left)</span><span><i style="background:var(--sun)"></i>POA irradiance (W/m², right)</span></div>
+    <div class="cwrap"><svg class="ch" id="c1" viewBox="0 0 900 250" role="img" aria-label="Expected power ratio and irradiance over latest readings"></svg><div class="tip" id="t1"></div></div>
+  </div>
+  <div class="card"><h2>Temperatures</h2><div class="legend"><span><i style="background:var(--hot)"></i>Module</span><span><i style="background:var(--cool)"></i>Ambient</span></div><div class="cwrap"><svg class="ch" id="c2" viewBox="0 0 450 230" role="img" aria-label="Module and ambient temperature"></svg><div class="tip" id="t2"></div></div></div>
+  <div class="card"><h2>Model response: irradiance → ratio</h2><div class="legend"><span><i style="background:var(--accent)"></i>Readings in buffer (latest highlighted)</span></div><svg class="ch" id="c3" viewBox="0 0 450 230" role="img" aria-label="Scatter of irradiance versus expected power ratio"></svg></div>
+</section>
+
+<section class="card">
+  <h2>Latest readings</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Time (site)</th><th>Sensor</th><th>POA W/m²</th><th>Module °C</th><th>Ambient °C</th><th>Expected %</th><th id="expectedPowerHeader">Expected MW</th><th>Sun</th></tr></thead>
+    <tbody id="rows"><tr><td colspan="8" class="empty" id="emptyMsg">Waiting for data…</td></tr></tbody>
+  </table></div>
+</section>
+<footer>Live updates via Server-Sent Events from <code>/stream</code>. Readings arrive at <code>POST /predict</code>. Recent readings are kept in server memory. API endpoints: <code>/api/latest</code>, <code>/api/history</code>, docs: <code>/docs</code>.<br>Capacity scaling changes dashboard calculations only; it does not retrain the model or validate performance at the selected plant size.</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var MAX=300,SHOW=120,ROWS=10;
+var UNIT_TO_W={W:1,kW:1000,MW:1000000};
+var capacityValue=1,capacityUnit="MW";
+var series=[],boot=null,lastSeq=0,dirty=false,got=false,paused=false,total=0;
+var recvTimes=[],lastRecv=0,sumExp=0,peak=0;
+var $=function(id){return document.getElementById(id);};
+var css=function(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();};
+var fmt=function(v,d){return v===null||v===undefined||!Number.isFinite(Number(v))?"–":Number(v).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});};
+var clock=function(ts){return String(ts||"").slice(0,16).replace("T"," ");};
+function ratioOf(e){var v=Number(e.expected_power_norm);return Number.isFinite(v)?Math.max(0,Math.min(1,v)):0;}
+function getCapacityW(){return capacityValue*UNIT_TO_W[capacityUnit];}
+function getExpectedPowerW(e){return ratioOf(e)*getCapacityW();}
+function getExpectedPowerDisplay(e){return ratioOf(e)*capacityValue;}
+function setStatus(s,t){$("status").setAttribute("data-s",s);$("statusText").textContent=t;}
+function showBanner(t){$("banner").textContent=t;$("banner").classList.add("show");}
+function hideBanner(){$("banner").classList.remove("show");}
+function schedule(){if(!dirty&&!paused){dirty=true;requestAnimationFrame(render);}}
+
+function updateCapacity(){
+ var input=$("capacityInput"),value=Number(input.value);
+ if(input.value.trim()===""||!Number.isFinite(value)||value<=0){
+  input.setAttribute("aria-invalid","true");$("capacityNote").classList.add("error");
+  $("capacityNote").textContent="Enter a valid capacity greater than zero. The previous valid capacity remains active.";return;
+ }
+ input.removeAttribute("aria-invalid");$("capacityNote").classList.remove("error");
+ capacityValue=value;capacityUnit=$("capacityUnit").value;
+ var w=getCapacityW();
+ $("powerUnit").textContent=capacityUnit;
+ $("expectedPowerHeader").textContent="Expected "+capacityUnit;
+ $("capacitySummary").textContent="Based on "+fmt(capacityValue,Math.min(6,Math.max(0,(String(capacityValue).split(".")[1]||"").length)))+" "+capacityUnit+" installed capacity";
+ $("capacityNote").textContent="Equivalent capacity: "+fmt(w,3)+" W · "+fmt(w/1000,3)+" kW · "+fmt(w/1000000,6)+" MW";
+ schedule();
+}
+$("capacityInput").addEventListener("input",updateCapacity);
+$("capacityUnit").addEventListener("change",updateCapacity);
+$("bResetCapacity").addEventListener("click",function(){$("capacityInput").value="1";$("capacityUnit").value="MW";updateCapacity();});
+
+/* Generic line chart with hover tooltip. */
+function lineChart(svg,tip,W,H,defs){
+ var data=series.slice(-SHOW),n=data.length,L=48,R=defs.some(function(d){return d.right;})?50:12,T=12,B=27,pw=W-L-R,ph=H-T-B,out="";
+ function range(side){
+  var vals=[];defs.forEach(function(d){if(!!d.right===side)data.forEach(function(e){var v=Number(d.get(e));if(Number.isFinite(v))vals.push(v);});});
+  if(!vals.length)return[0,1];
+  var lo=Math.min.apply(null,vals),hi=Math.max.apply(null,vals);
+  var fixed=defs.filter(function(d){return!!d.right===side&&d.fixed;})[0];
+  if(fixed)return fixed.fixed;
+  var pad=(hi-lo)*.12||1;lo=Math.floor((lo-pad)/5)*5;hi=Math.ceil((hi+pad)/5)*5;if(hi<=lo)hi=lo+1;return[lo,hi];
+ }
+ var rl=range(false),rr=range(true);
+ var px=function(i){return L+(n<2?0:i/(SHOW-1)*pw)+(SHOW-n)/(SHOW-1)*pw;};
+ var py=function(v,r){return T+ph-(Math.max(r[0],Math.min(Number(v),r[1]))-r[0])/(r[1]-r[0]||1)*ph;};
+ [0,.5,1].forEach(function(f){var y=T+ph-f*ph;out+='<line class="grid" x1="'+L+'" x2="'+(W-R)+'" y1="'+y+'" y2="'+y+'"/><text class="axis" x="'+(L-7)+'" y="'+(y+4)+'" text-anchor="end">'+Math.round(rl[0]+f*(rl[1]-rl[0]))+'</text>';if(R>12)out+='<text class="axis" x="'+(W-R+6)+'" y="'+(y+4)+'">'+Math.round(rr[0]+f*(rr[1]-rr[0]))+'</text>';});
+ defs.forEach(function(d){if(n<2)return;var r=d.right?rr:rl;var path=data.map(function(e,i){return(i?"L":"M")+px(i).toFixed(1)+" "+py(d.get(e),r).toFixed(1);}).join(" ");if(d.area)out+='<path d="'+path+" L"+px(n-1).toFixed(1)+" "+(T+ph)+" L"+px(0).toFixed(1)+" "+(T+ph)+' Z" fill="'+d.soft+'"/>';out+='<path d="'+path+'" fill="none" stroke="'+d.color+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"'+(d.dash?' stroke-dasharray="5 4"':"")+'/>';out+='<circle cx="'+px(n-1).toFixed(1)+'" cy="'+py(d.get(data[n-1]),r).toFixed(1)+'" r="3.5" fill="'+d.color+'"/>';});
+ if(n>1)out+='<text class="axis" x="'+L+'" y="'+(H-5)+'">'+clock(data[0].timestamp).slice(2,16)+'</text><text class="axis" x="'+(W-R)+'" y="'+(H-5)+'" text-anchor="end">'+clock(data[n-1].timestamp).slice(2,16)+'</text>';
+ out+='<line id="'+svg.id+'x" class="grid" y1="'+T+'" y2="'+(T+ph)+'" style="display:none;stroke:var(--muted)"/>';svg.innerHTML=out;
+ svg.onmousemove=svg.ontouchmove=function(ev){if(!n)return;var box=svg.getBoundingClientRect(),p=ev.touches?ev.touches[0]:ev,x=(p.clientX-box.left)/box.width*W;var i=Math.round(((x-L)/pw*(SHOW-1))-(SHOW-n));i=Math.max(0,Math.min(n-1,i));var e=data[i],line=$(svg.id+"x");line.setAttribute("x1",px(i));line.setAttribute("x2",px(i));line.style.display="";tip.innerHTML="<b>"+clock(e.timestamp)+"</b>"+defs.map(function(d){return'<span style="color:'+d.color+'">●</span> '+d.name+': <b style="display:inline">'+fmt(d.get(e),d.dec)+'</b>';}).join("<br>");tip.style.display="block";var tx=px(i)/W*box.width;tip.style.left=Math.max(0,Math.min(tx+12,box.width-160))+"px";tip.style.top="6px";};
+ svg.onmouseleave=svg.ontouchend=function(){tip.style.display="none";var l=$(svg.id+"x");if(l)l.style.display="none";};
+}
+function scatter(svg){
+ var W=450,H=230,L=48,R=12,T=12,B=28,pw=W-L-R,ph=H-T-B,out="";
+ var xs=function(v){return L+Math.max(0,Math.min(Number(v)||0,1300))/1300*pw;},ys=function(v){return T+ph-Math.max(0,Math.min(Number(v)||0,100))/100*ph;};
+ [0,50,100].forEach(function(v){out+='<line class="grid" x1="'+L+'" x2="'+(W-R)+'" y1="'+ys(v)+'" y2="'+ys(v)+'"/><text class="axis" x="'+(L-7)+'" y="'+(ys(v)+4)+'" text-anchor="end">'+v+'</text>';});
+ [0,500,1000].forEach(function(v){out+='<text class="axis" x="'+xs(v)+'" y="'+(H-6)+'" text-anchor="middle">'+v+'</text>';});
+ series.forEach(function(e,i){var last=i===series.length-1;out+='<circle cx="'+xs(e.poa_irradiance).toFixed(1)+'" cy="'+ys(ratioOf(e)*100).toFixed(1)+'" r="'+(last?5:3)+'" fill="'+(last?css("--sun"):css("--accent"))+'" fill-opacity="'+(last?1:.55)+'"/>';});svg.innerHTML=out;
+}
+function spark(id,key,color){var d=series.slice(-40),svg=$(id);if(d.length<2){svg.innerHTML="";return;}var v=d.map(function(e){return Number(e[key])||0;}),lo=Math.min.apply(null,v),hi=Math.max.apply(null,v),sp=hi-lo||1;svg.innerHTML='<polyline fill="none" stroke="'+color+'" stroke-width="1.8" vector-effect="non-scaling-stroke" points="'+v.map(function(x,i){return(i/(v.length-1)*120).toFixed(1)+","+(27-(x-lo)/sp*24).toFixed(1);}).join(" ")+'"/>';}
+function delta(id,key,unit,dec){var el=$(id),n=series.length;if(n<2){el.innerHTML="&nbsp;";el.className="d";return;}var d=(Number(series[n-1][key])||0)-(Number(series[n-2][key])||0);el.className="d "+(Math.abs(d)<1e-9?"":d>0?"up":"dn");el.textContent=(d>0?"▲ +":d<0?"▼ ":"• ")+fmt(d,dec)+" "+unit+" vs previous";}
+
+function render(){
+ dirty=false;var e=series[series.length-1];if(!e)return;
+ var pct=ratioOf(e)*100;
+ $("gVal").textContent=fmt(pct,1);
+ $("gFill").setAttribute("stroke-dasharray",(Math.min(pct,100)/100*251.3).toFixed(1)+" 252");
+ $("kW").textContent=fmt(getExpectedPowerDisplay(e),3);
+ $("powerUnit").textContent=capacityUnit;
+ var day=$("kDay");day.textContent=e.daytime?"Daytime":"Night / low light";day.className="tag"+(e.daytime?"":" night");
+ $("kTime").textContent=clock(e.timestamp);
+ $("kPoa").textContent=fmt(e.poa_irradiance,0);$("kMod").textContent=fmt(e.module_temp,1);$("kAmb").textContent=fmt(e.ambient_temp,1);
+ $("kDt").textContent=fmt((Number(e.module_temp)||0)-(Number(e.ambient_temp)||0),1);
+ $("kAvg").textContent=fmt(sumExp/Math.max(total,1)*100,1);$("dPeak").textContent="Peak "+fmt(peak*100,1)+" %";
+ $("kCnt").textContent=total.toLocaleString("en-US");
+ var span=recvTimes.length>1?(recvTimes[recvTimes.length-1]-recvTimes[0])/60000:0;
+ $("dRate").textContent=span>0?fmt((recvTimes.length-1)/span,0)+" / min":"– / min";
+ $("src").textContent="Source: "+(e.sensor_id?e.sensor_id:(e.source==="sensor"?"sensor":"file replay"));
+ delta("dPoa","poa_irradiance","W/m²",0);delta("dMod","module_temp","°C",1);delta("dAmb","ambient_temp","°C",1);
+ spark("sPoa","poa_irradiance",css("--sun"));spark("sMod","module_temp",css("--hot"));spark("sAmb","ambient_temp",css("--cool"));
+ lineChart($("c1"),$("t1"),900,250,[
+  {name:"Expected %",get:function(x){return ratioOf(x)*100;},color:css("--accent"),soft:css("--accent-soft"),area:true,fixed:[0,100],dec:1},
+  {name:"POA W/m²",get:function(x){return Number(x.poa_irradiance)||0;},color:css("--sun"),right:true,dash:true,fixed:[0,1200],dec:0}
+ ]);
+ lineChart($("c2"),$("t2"),450,230,[
+  {name:"Module °C",get:function(x){return Number(x.module_temp)||0;},color:css("--hot"),dec:1},
+  {name:"Ambient °C",get:function(x){return Number(x.ambient_temp)||0;},color:css("--cool"),dec:1}
+ ]);
+ scatter($("c3"));
+ $("rows").innerHTML=series.slice(-ROWS).reverse().map(function(r){
+  return"<tr><td>"+clock(r.timestamp)+"</td><td>"+(r.sensor_id||"–")+"</td><td>"+fmt(r.poa_irradiance,0)+
+  "</td><td>"+fmt(r.module_temp,1)+"</td><td>"+fmt(r.ambient_temp,1)+"</td><td><b>"+fmt(ratioOf(r)*100,1)+
+  "</b></td><td>"+fmt(getExpectedPowerDisplay(r),3)+" "+capacityUnit+"</td><td>"+(r.daytime?"Day":"Night")+"</td></tr>";
+ }).join("");
+}
+
+/* Live stream */
+var es=new EventSource("stream");
+es.onopen=function(){if(!paused)setStatus(got?"live":"wait",got?"Live":"Connected · waiting for data");hideBanner();};
+es.onerror=function(){setStatus("down","Reconnecting…");showBanner("Connection to the API lost. The browser will attempt to reconnect automatically. Check that the API and sensor process are running.");};
+es.onmessage=function(m){
+ var e;try{e=JSON.parse(m.data);}catch(x){return;}
+ if(!e||!Number.isFinite(Number(e.expected_power_norm)))return;
+ if(boot!==null&&e.boot!==boot){series=[];lastSeq=0;total=0;sumExp=0;peak=0;recvTimes=[];}
+ boot=e.boot;
+ var seq=Number(e.seq);
+ if(Number.isFinite(seq)&&seq<=lastSeq)return;
+ if(Number.isFinite(seq))lastSeq=seq;
+ got=true;lastRecv=Date.now();series.push(e);if(series.length>MAX)series.shift();
+ total+=1;sumExp+=ratioOf(e);peak=Math.max(peak,ratioOf(e));
+ recvTimes.push(lastRecv);if(recvTimes.length>60)recvTimes.shift();
+ hideBanner();if(!paused)setStatus("live","Live");schedule();
+};
+setInterval(function(){
+ if(!got||paused)return;
+ var gaps=[];for(var i=1;i<recvTimes.length;i++)gaps.push(recvTimes[i]-recvTimes[i-1]);
+ gaps.sort(function(a,b){return a-b;});
+ var typical=gaps.length?gaps[Math.floor(gaps.length/2)]:1000,age=Date.now()-lastRecv,limit=Math.max(10000,typical*5);
+ if(age>limit){setStatus("stale","No data for "+Math.round(age/1000)+" s");showBanner("No new readings for "+Math.round(age/1000)+" s. Check the sensor process and POST /predict.");}
+},2000);
+
+/* Toolbar */
+$("bPause").onclick=function(){paused=!paused;this.textContent=paused?"Resume":"Pause";if(paused)setStatus("paused","Paused (data still collected)");else{setStatus(got?"live":"wait",got?"Live":"Waiting for data");schedule();}};
+$("bCsv").onclick=function(){
+ if(!series.length)return;
+ var header=["timestamp","sensor_id","poa_irradiance","module_temp","ambient_temp","expected_power_norm","capacity_value","capacity_unit","capacity_w","expected_power_w","expected_power_display","expected_power_display_unit","daytime"];
+ var csv=[header.join(",")].concat(series.map(function(e){return[
+  e.timestamp,e.sensor_id||"",e.poa_irradiance,e.module_temp,e.ambient_temp,ratioOf(e),capacityValue,capacityUnit,
+  getCapacityW(),getExpectedPowerW(e),getExpectedPowerDisplay(e),capacityUnit,e.daytime
+ ].map(function(v){var s=String(v==null?"":v);return/[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(",");})).join("\r\n");
+ var blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="expected_power_"+Date.now()+".csv";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+};
+function applyTheme(theme){document.documentElement.setAttribute("data-theme",theme);$("bTheme").textContent=theme==="dark"?"☀ Light mode":"☾ Dark mode";$("bTheme").setAttribute("aria-label",theme==="dark"?"Switch to light mode":"Switch to dark mode");}
+$("bTheme").onclick=function(){var cur=document.documentElement.getAttribute("data-theme")||"light",next=cur==="dark"?"light":"dark";applyTheme(next);try{localStorage.setItem("pv-dashboard-theme",next);}catch(e){}schedule();};
+try{var saved=localStorage.getItem("pv-dashboard-theme");applyTheme(saved==="dark"||saved==="light"?saved:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"));}catch(e){applyTheme("light");}
+
+updateCapacity();
+setTimeout(function(){
+ if(got)return;
+ $("emptyMsg").innerHTML='No data yet. Start the sensor (<code>python simulator/sensor_sim.py</code>) or send a reading to <code>POST /predict</code>.';
+ fetch("./").then(function(r){return r.json();}).then(function(j){if(j&&j.replay_error){var d=document.createElement("div");d.textContent=j.replay_error;d.style.cssText="margin-top:8px;color:var(--bad)";$("emptyMsg").appendChild(d);}}).catch(function(){});
+},4000);
+})();
+</script>
+</body>
+</html>

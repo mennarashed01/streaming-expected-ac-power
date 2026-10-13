@@ -1,0 +1,8 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+xgboost==3.2.0
+numpy
+pandas
+pydantic>=2
+pytest
+httpx

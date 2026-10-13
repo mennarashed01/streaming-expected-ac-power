@@ -1,0 +1,16 @@
+{
+  "features": [
+    "POA_IRRADIANCE",
+    "AMBIENT_TEMP",
+    "MODULE_TEMP_2",
+    "hour_sin",
+    "hour_cos",
+    "doy_sin",
+    "doy_cos"
+  ],
+  "ac_cap_w": 1120.0,
+  "timezone": "America/Denver",
+  "poa_min": 50,
+  "deficit_min_norm": 0.1,
+  "xgboost_version": "3.4.1"
+}

@@ -1,0 +1,37 @@
+# Always-on stack:  docker compose up -d --build
+#   api    : the model + dashboard (listens to sensors only)       -> http://localhost:8000/dashboard
+#   sensor : the software sensor, reads data/sensor_data.csv and POSTs each row to the API
+# Both restart automatically (crash, reboot of the machine). Edit/append data/sensor_data.csv any time:
+# with MODE=loop the sensor reloads the file when it changes; with MODE=tail new rows are sent as they appear.
+services:
+  api:
+    build: .
+    image: pv-api
+    restart: unless-stopped
+    environment:
+      SOURCE: sensor
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  sensor:
+    image: pv-api
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    command: ["python", "simulator/sensor_sim.py"]
+    environment:
+      API_URL: http://api:8000
+      SENSOR_CSV: /srv/data/sensor_data.csv
+      INTERVAL: "${INTERVAL:-1.0}"
+      MODE: "${MODE:-loop}"
+      NOISE: "${NOISE:-0}"
+      SENSOR_ID: "${SENSOR_ID:-SIM-PV10-01}"
+    volumes:
+      - ./data:/srv/data:ro
